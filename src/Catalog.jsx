@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-/* ================= 1. ОНОВЛЕНИЙ МАСИВ ТОВАРІВ (З ВЗУТТЯМ) ================= */
 const MOCK_PRODUCTS = [
   /* ————— MEN'S PRODUCTS ————— */
   {
@@ -62,7 +61,7 @@ const MOCK_PRODUCTS = [
     name: 'Studio Leather Sneakers',
     price: 120,
     gender: 'men',
-    category: 'shoes', // НОВА КАТЕГОРІЯ (Чоловіче взуття)
+    category: 'shoes',
     image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=800',
     colors: ['#f4f4f5', '#a1a1aa']
   },
@@ -136,7 +135,7 @@ const MOCK_PRODUCTS = [
     name: 'Minimalist Leather Mules',
     price: 110,
     gender: 'women',
-    category: 'shoes', // НОВА КАТЕГОРІЯ (Жіноче взуття)
+    category: 'shoes',
     image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=800',
     colors: ['#d4d4d8', '#27272a']
   },
@@ -152,22 +151,19 @@ const MOCK_PRODUCTS = [
 ];
 
 export default function Catalog() {
-  /* ================= 2. СТЕЙТИ ДЛЯ ФІЛЬТРІВ ТА КОРЗИНИ ================= */
   const [genderFilter, setGenderFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Категорії товарів (додано Shoes)
   const categories = [
     { id: 'all', name: 'All Items' },
     { id: 'hoodies', name: 'Hoodies & Knits' },
     { id: 'shirts', name: 'T-Shirts & Tops' },
     { id: 'pants', name: 'Pants & Joggers' },
-    { id: 'shoes', name: 'Shoes & Footwear' } // Нова кнопка в меню
+    { id: 'shoes', name: 'Shoes & Footwear' }
   ];
 
-  /* ================= 3. ФУНКЦІЇ КОРЗИНИ ================= */
   const addToCart = (product) => {
     setCart((prevCart) => {
       const existing = prevCart.find((item) => item.id === product.id);
@@ -178,7 +174,7 @@ export default function Catalog() {
       }
       return [...prevCart, { ...product, quantity: 1 }];
     });
-    setIsCartOpen(true); // Автоматично відкриваємо кошик при додаванні
+    // ВИПРАВЛЕНО: Рядок відриття кошика видалено, тепер він не вискакує сам!
   };
 
   const removeFromCart = (productId) => {
@@ -200,7 +196,6 @@ export default function Catalog() {
   const totalCartItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const totalCartPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Фільтрація товарів
   const filteredProducts = MOCK_PRODUCTS.filter((product) => {
     const matchGender = genderFilter === 'all' || product.gender === genderFilter;
     const matchCategory = categoryFilter === 'all' || product.category === categoryFilter;
@@ -210,33 +205,40 @@ export default function Catalog() {
   return (
     <div className="min-h-screen bg-[#fcfcfc] text-[#111111] font-sans relative antialiased">
       
-      {/* HEADER НАВІГАЦІЯ З ІКОНКОЮ КОРЗИНИ */}
+      {/* HEADER НАВІГАЦІЯ */}
       <header className="sticky top-0 z-40 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-zinc-100 px-6 py-4 flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold tracking-widest uppercase">ASES STUDIO</h1>
           <p className="text-[10px] text-zinc-400 tracking-wider uppercase mt-0.5">Premium Essentials</p>
         </div>
 
-        {/* КНОПКА КОРЗИНИ */}
-        <button 
-          onClick={() => setIsCartOpen(true)}
-          className="relative p-2 flex items-center gap-2 hover:opacity-70 transition-all"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-          </svg>
-          {totalCartItems > 0 && (
-            <span className="absolute -top-1 -right-1 bg-[#111111] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-medium animate-fade-in">
-              {totalCartItems}
+        {/* БЛОК КОРЗИНИ ЗО ЗО КМУЛЯТИВНИМ ЦІННИКОМ */}
+        <div className="flex items-center gap-3">
+          {totalCartPrice > 0 && (
+            <span className="text-xs font-semibold text-zinc-700 tracking-wide bg-zinc-100 px-2.5 py-1 rounded-md transition-all duration-300">
+              ${totalCartPrice}.00
             </span>
           )}
-        </button>
+          
+          <button 
+            onClick={() => setIsCartOpen(true)}
+            className="relative p-2 flex items-center gap-2 hover:opacity-70 transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
+            {totalCartItems > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[#111111] text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-medium">
+                {totalCartItems}
+              </span>
+            )}
+          </button>
+        </div>
       </header>
 
       {/* МЕНЮ ФІЛЬТРІВ */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-12 border-b border-zinc-100 pb-6">
-          {/* Фільтр Статі */}
           <div className="flex gap-2 bg-zinc-100 p-1 rounded-lg self-start">
             {['all', 'men', 'women'].map((g) => (
               <button
@@ -251,7 +253,6 @@ export default function Catalog() {
             ))}
           </div>
 
-          {/* Фільтр Категорій */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
             {categories.map((cat) => (
               <button
@@ -297,7 +298,6 @@ export default function Catalog() {
                 </div>
               </div>
 
-              {/* КНОПКА ДОДАТИ В КОРЗИНУ */}
               <button
                 onClick={() => addToCart(product)}
                 className="mt-4 w-full bg-zinc-900 text-white text-xs font-medium py-3 rounded-lg hover:bg-black transition-colors uppercase tracking-wider shadow-sm"
@@ -309,16 +309,14 @@ export default function Catalog() {
         </div>
       </main>
 
-      {/* ================= VISUAL SIDEBAR: ВИСУВНИЙ КОШИК ================= */}
+      {/* ВИСУВНИЙ КОШИК */}
       {isCartOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
-          {/* Затемнення фону */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity" onClick={() => setIsCartOpen(false)} />
 
           <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between animate-slide-in">
+            <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between">
               
-              {/* Шапка кошика */}
               <div className="px-6 py-5 border-b border-zinc-100 flex justify-between items-center">
                 <h2 className="text-base font-semibold tracking-wider uppercase">Your Cart ({totalCartItems})</h2>
                 <button onClick={() => setIsCartOpen(false)} className="p-1 hover:opacity-60">
@@ -328,7 +326,6 @@ export default function Catalog() {
                 </button>
               </div>
 
-              {/* Список доданих товарів */}
               <div className="flex-1 overflow-y-auto px-6 py-4 divide-y divide-zinc-100">
                 {cart.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-zinc-400 py-12">
@@ -345,7 +342,6 @@ export default function Catalog() {
                         <h4 className="text-xs font-medium text-zinc-800 line-clamp-1">{item.name}</h4>
                         <p className="text-xs font-semibold text-zinc-900 mt-1">${item.price * item.quantity}.00</p>
                         
-                        {/* Селектор кількості (+ / -) */}
                         <div className="flex items-center gap-2 mt-2">
                           <button onClick={() => updateQuantity(item.id, -1)} className="w-6 h-6 border border-zinc-200 rounded flex items-center justify-center text-xs hover:bg-zinc-50">-</button>
                           <span className="text-xs font-medium w-4 text-center">{item.quantity}</span>
@@ -362,7 +358,6 @@ export default function Catalog() {
                 )}
               </div>
 
-              {/* Сума підрахунку та кнопка оформлення */}
               {cart.length > 0 && (
                 <div className="px-6 py-6 border-t border-zinc-100 bg-zinc-50">
                   <div className="flex justify-between text-sm font-medium text-zinc-900 mb-4">
@@ -383,3 +378,4 @@ export default function Catalog() {
     </div>
   );
 }
+
