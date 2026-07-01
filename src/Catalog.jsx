@@ -155,6 +155,10 @@ export default function Catalog() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  
+  /* СТАТИ ДЛЯ КЕРУВАННЯ АНІМАЦІЄЮ ПОЛЬОТУ ТА ВІБРАЦІЇ */
+  const [flyingItems, setFlyingItems] = useState([]);
+  const [isCartJiggling, setIsCartJiggling] = useState(false);
 
   const categories = [
     { id: 'all', name: 'All Items' },
@@ -164,7 +168,8 @@ export default function Catalog() {
     { id: 'shoes', name: 'Shoes & Footwear' }
   ];
 
-  const addToCart = (product) => {
+  /* МОДЕРНІЗОВАНА ФУНКЦІЯ ДОДАВАННЯ З ТРЕКІНГОМ КЛІКУ */
+  const addToCart = (product, event) => {
     setCart((prevCart) => {
       const existing = prevCart.find((item) => item.id === product.id);
       if (existing) {
@@ -174,7 +179,30 @@ export default function Catalog() {
       }
       return [...prevCart, { ...product, quantity: 1 }];
     });
-    // ВИПРАВЛЕНО: Рядок відриття кошика видалено, тепер він не вискакує сам!
+
+    // Логіка створення літаючого об'єкта за координатами кліку
+    if (event && event.clientX) {
+      const newItem = {
+        id: Date.now(),
+        x: event.clientX,
+        y: event.clientY,
+        image: product.image
+      };
+      setFlyingItems((prev) => [...prev, newItem]);
+
+      // Видаляємо елемент з пам'яті після завершення польоту (650ms)
+      setTimeout(() => {
+        setFlyingItems((prev) => prev.filter((i) => i.id !== newItem.id));
+      }, 650);
+
+      // Коли частка долітає — вмикаємо «двіж» кошика в шапці
+      setTimeout(() => {
+        setIsCartJiggling(true);
+      }, 500);
+      setTimeout(() => {
+        setIsCartJiggling(false);
+      }, 850);
+    }
   };
 
   const removeFromCart = (productId) => {
@@ -205,6 +233,37 @@ export default function Catalog() {
   return (
     <div className="min-h-screen bg-[#fcfcfc] text-[#111111] font-sans relative antialiased">
       
+      {/* СТИЛІ ДЛЯ СЕКРЕТНИХ ПРЕМІУМ-АНІМАЦІЙ */}
+      <style>{`
+        @keyframes flyToCart {
+          0% {
+            transform: translate(calc(var(--start-x) - 20px), calc(var(--start-y) - 20px)) scale(1) rotate(0deg);
+            opacity: 1;
+          }
+          40% {
+            /* Ефект дуги: підкидає картинку трохи вгору під час польоту */
+            transform: translate(calc(var(--start-x) + (100vw - var(--start-x)) * 0.35), calc(var(--start-y) - 120px)) scale(0.7) rotate(140deg);
+            opacity: 0.9;
+          }
+          100% {
+            /* Фінішна точка — верхній правий куток екрана, де кнопка кошика */
+            transform: translate(calc(100vw - 60px), 25px) scale(0.05) rotate(360deg);
+            opacity: 0;
+          }
+        }
+        @keyframes jiggle {
+          0%, 100% { transform: scale(1); }
+          30% { transform: scale(1.25) rotate(-8deg); }
+          60% { transform: scale(1.25) rotate(8deg); }
+        }
+        .animate-fly-item {
+          animation: flyToCart 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        .animate-jiggle-cart {
+          animation: jiggle 0.35s ease-in-out;
+        }
+      `}</style>
+
       {/* HEADER НАВІГАЦІЯ */}
       <header className="sticky top-0 z-40 bg-[#fcfcfc]/80 backdrop-blur-md border-b border-zinc-100 px-6 py-4 flex justify-between items-center">
         <div>
@@ -212,10 +271,10 @@ export default function Catalog() {
           <p className="text-[10px] text-zinc-400 tracking-wider uppercase mt-0.5">Premium Essentials</p>
         </div>
 
-        {/* БЛОК КОРЗИНИ ЗО ЗО КМУЛЯТИВНИМ ЦІННИКОМ */}
-        <div className="flex items-center gap-3">
+        {/* БЛОК КОРЗИНИ СТАЄ ЕЛАСТИЧНИМ ПРИ ДОДАВАННІ */}
+        <div className={`flex items-center gap-3 transition-transform ${isCartJiggling ? 'animate-jiggle-cart' : ''}`}>
           {totalCartPrice > 0 && (
-            <span className="text-xs font-semibold text-zinc-700 tracking-wide bg-zinc-100 px-2.5 py-1 rounded-md transition-all duration-300">
+            <span className="text-xs font-semibold text-zinc-700 tracking-wide bg-zinc-100 px-2.5 py-1 rounded-md">
               ${totalCartPrice}.00
             </span>
           )}
@@ -298,9 +357,10 @@ export default function Catalog() {
                 </div>
               </div>
 
+              {/* ПЕРЕДАЄМО ЕВЕНТ КЛІКУ (e) У ФУНКЦІЮ */}
               <button
-                onClick={() => addToCart(product)}
-                className="mt-4 w-full bg-zinc-900 text-white text-xs font-medium py-3 rounded-lg hover:bg-black transition-colors uppercase tracking-wider shadow-sm"
+                onClick={(e) => addToCart(product, e)}
+                className="mt-4 w-full bg-zinc-900 text-white text-xs font-medium py-3 rounded-lg hover:bg-black active:scale-95 transition-all uppercase tracking-wider shadow-sm"
               >
                 Add to Cart
               </button>
@@ -313,7 +373,6 @@ export default function Catalog() {
       {isCartOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity" onClick={() => setIsCartOpen(false)} />
-
           <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
             <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between">
               
@@ -375,7 +434,24 @@ export default function Catalog() {
         </div>
       )}
 
+      {/* ДИНАМІЧНИЙ РЕНДЕР ЛІТАЮЧИХ ЕЛЕМЕНТІВ */}
+      {flyingItems.map((item) => (
+        <div
+          key={item.id}
+          className="fixed pointer-events-none z-50 w-11 h-11 rounded-full border border-white bg-zinc-200 shadow-xl overflow-hidden animate-fly-item"
+          style={{
+            '--start-x': `${item.x}px`,
+            '--start-y': `${item.y}px`,
+            left: 0,
+            top: 0,
+          }}
+        >
+          <img src={item.image} alt="flying asset" className="w-full h-full object-cover" />
+        </div>
+      ))}
+
     </div>
   );
 }
+
 
